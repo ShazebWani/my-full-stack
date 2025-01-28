@@ -4,8 +4,15 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
-
+from app.models import (
+    Item,
+    ItemCreate,
+    Meeting,
+    MeetingCreate,
+    User,
+    UserCreate,
+    UserUpdate,
+)
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -52,3 +59,14 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.commit()
     session.refresh(db_item)
     return db_item
+
+def create_meeting(*, session: Session, meeting_in: MeetingCreate) -> Meeting:
+    db_meeting = Meeting(
+        title=meeting_in.title,
+        agenda=meeting_in.agenda,
+        summary=meeting_in.summary,
+    )
+    session.add(db_meeting)
+    session.commit()
+    session.refresh(db_meeting)
+    return db_meeting

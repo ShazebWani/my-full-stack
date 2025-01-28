@@ -112,3 +112,37 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+# My code here, mimicing items
+# Shared properties
+class MeetingBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    agenda: str = Field(min_length=1, max_length=255)
+    summary: str | None = Field(default=None, max_length=255)
+
+
+# Properties to receive on meeting creation
+class MeetingCreate(MeetingBase):
+    pass
+
+
+# Properties to receive on meeting update
+class MeetingUpdate(MeetingBase):
+    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+    agenda: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+
+
+# Database model, database table inferred from class name
+class Meeting(MeetingBase, table=True):
+    id: int = Field(primary_key=True)
+    title: str = Field(max_length=255)
+
+
+# Properties to return via API, id is always required
+class MeetingPublic(MeetingBase):
+    id: int
+
+
+class MeetingsPublic(SQLModel):
+    data: list[MeetingPublic]
+    count: int
