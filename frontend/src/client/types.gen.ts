@@ -35,6 +35,30 @@ export type ItemUpdate = {
   description?: string | null
 }
 
+export type MeetingCreate = {
+  title: string
+  agenda: string
+  summary?: string | null
+}
+
+export type MeetingPublic = {
+  title: string
+  agenda: string
+  summary?: string | null
+  id: number
+}
+
+export type MeetingsPublic = {
+  data: Array<MeetingPublic>
+  count: number
+}
+
+export type MeetingUpdate = {
+  title?: string | null
+  agenda?: string | null
+  summary?: string | null
+}
+
 export type Message = {
   message: string
 }
@@ -42,6 +66,13 @@ export type Message = {
 export type NewPassword = {
   token: string
   new_password: string
+}
+
+export type PrivateUserCreate = {
+  email: string
+  password: string
+  full_name: string
+  is_verified?: boolean
 }
 
 export type Token = {
@@ -157,6 +188,44 @@ export type LoginRecoverPasswordHtmlContentData = {
 }
 
 export type LoginRecoverPasswordHtmlContentResponse = string
+
+export type MeetingsReadMeetingsData = {
+  limit?: number
+  skip?: number
+}
+
+export type MeetingsReadMeetingsResponse = MeetingsPublic
+
+export type MeetingsCreateMeetingData = {
+  requestBody: MeetingCreate
+}
+
+export type MeetingsCreateMeetingResponse = MeetingPublic
+
+export type MeetingsReadMeetingData = {
+  id: number
+}
+
+export type MeetingsReadMeetingResponse = MeetingPublic
+
+export type MeetingsUpdateMeetingData = {
+  id: number
+  requestBody: MeetingUpdate
+}
+
+export type MeetingsUpdateMeetingResponse = MeetingPublic
+
+export type MeetingsDeleteMeetingData = {
+  id: number
+}
+
+export type MeetingsDeleteMeetingResponse = Message
+
+export type PrivateCreateUserData = {
+  requestBody: PrivateUserCreate
+}
+
+export type PrivateCreateUserResponse = UserPublic
 
 export type UsersReadUsersData = {
   limit?: number
