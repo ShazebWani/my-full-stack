@@ -9,19 +9,21 @@ import {
 import { BsThreeDotsVertical } from "react-icons/bs"
 import { FiEdit, FiTrash } from "react-icons/fi"
 
-import type { ItemPublic, UserPublic } from "../../client"
+import type { ItemPublic, MeetingPublic, UserPublic } from "../../client"
 import EditUser from "../Admin/EditUser"
 import EditItem from "../Items/EditItem"
+import EditMeeting from "../Meetings/EditMeeting" 
 import Delete from "./DeleteAlert"
 
 interface ActionsMenuProps {
   type: string
-  value: ItemPublic | UserPublic
+  value: ItemPublic | UserPublic | MeetingPublic
   disabled?: boolean
 }
 
 const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
   const editUserModal = useDisclosure()
+  const editMeetingModal = useDisclosure() 
   const deleteModal = useDisclosure()
 
   return (
@@ -35,7 +37,11 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
         />
         <MenuList>
           <MenuItem
-            onClick={editUserModal.onOpen}
+            onClick={
+              type === "Meeting"
+                ? editMeetingModal.onOpen 
+                : editUserModal.onOpen 
+            }
             icon={<FiEdit fontSize="16px" />}
           >
             Edit {type}
@@ -54,11 +60,17 @@ const ActionsMenu = ({ type, value, disabled }: ActionsMenuProps) => {
             isOpen={editUserModal.isOpen}
             onClose={editUserModal.onClose}
           />
-        ) : (
+        ) : type === "Item" ? (
           <EditItem
             item={value as ItemPublic}
             isOpen={editUserModal.isOpen}
             onClose={editUserModal.onClose}
+          />
+        ) : (
+          <EditMeeting
+            meeting={value as MeetingPublic}
+            isOpen={editMeetingModal.isOpen}
+            onClose={editMeetingModal.onClose}
           />
         )}
         <Delete

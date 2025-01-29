@@ -1,113 +1,70 @@
-import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
-  Button,
-} from "@chakra-ui/react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import React from "react"
-import { useForm } from "react-hook-form"
+import { test, expect } from "@playwright/test";
 
-import { ItemsService, UsersService } from "../../client"
-import useCustomToast from "../../hooks/useCustomToast"
+// Test data
+const meetingTitle = "Team Sync";
+const updatedMeetingTitle = "Updated Team Sync";
+const meetingAgenda = "Discuss project updates";
+const updatedAgenda = "Updated project agenda";
+const meetingSummary = "Summary of updates";
 
-interface DeleteProps {
-  type: string
-  id: string
-  isOpen: boolean
-  onClose: () => void
-}
+test.describe("Meeting Tests", () => {
+  test.beforeEach(async ({ page }) => {
+    // Authenticate before each test
+    await page.goto("/login");
+    await page.getByPlaceholder("Email").fill("admin@example.com");
+    await page.getByPlaceholder("Password").fill("adminpassword");
+    await page.getByRole("button", { name: "Log In" }).click();
+    await page.waitForURL("/"); // Adjust if needed
+  });
 
-const Delete = ({ type, id, isOpen, onClose }: DeleteProps) => {
-  const queryClient = useQueryClient()
-  const showToast = useCustomToast()
-  const cancelRef = React.useRef<HTMLButtonElement | null>(null)
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm()
+  test("Add Meeting: Required fields validation", async ({ page }) => {
+    await page.goto("/meetings/add");
+    await page.getByRole("button", { name: "Save" }).click();
 
-  const deleteEntity = async (id: string) => {
-    if (type === "Item") {
-      await ItemsService.deleteItem({ id: id })
-    } else if (type === "User") {
-      await UsersService.deleteUser({ userId: id })
-    } else {
-      throw new Error(`Unexpected type: ${type}`)
-    }
-  }
+    // Assert validation errors
+    const titleError = await page.locator("#title + span").textContent();
+    expect(titleError).toContain("Title is required");
 
-  const mutation = useMutation({
-    mutationFn: deleteEntity,
-    onSuccess: () => {
-      showToast(
-        "Success",
-        `The ${type.toLowerCase()} was deleted successfully.`,
-        "success",
-      )
-      onClose()
-    },
-    onError: () => {
-      showToast(
-        "An error occurred.",
-        `An error occurred while deleting the ${type.toLowerCase()}.`,
-        "error",
-      )
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: [type === "Item" ? "items" : "users"],
-      })
-    },
-  })
+    const agendaError = await page.locator("#agenda + span").textContent();
+    expect(agendaError).toContain("Agenda is required");
+  });
 
-  const onSubmit = async () => {
-    mutation.mutate(id)
-  }
+  test("Add Meeting: Successful creation", async ({ page }) => {
+    await page.goto("/meetings/add");
+    await page.getByPlaceholder("Title").fill(meetingTitle);
+    await page.getByPlaceholder("Agenda").fill(meetingAgenda);
+    await page.getByPlaceholder("Summary").fill(meetingSummary);
+    await page.getByRole("button", { name: "Save" }).click();
 
-  return (
-    <>
-      <AlertDialog
-        isOpen={isOpen}
-        onClose={onClose}
-        leastDestructiveRef={cancelRef}
-        size={{ base: "sm", md: "md" }}
-        isCentered
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent as="form" onSubmit={handleSubmit(onSubmit)}>
-            <AlertDialogHeader>Delete {type}</AlertDialogHeader>
+    // Verify the meeting appears in the list
+    const newMeeting = await page.getByText(meetingTitle);
+    expect(newMeeting).toBeVisible();
+  });
 
-            <AlertDialogBody>
-              {type === "User" && (
-                <span>
-                  All items associated with this user will also be{" "}
-                  <strong>permantly deleted. </strong>
-                </span>
-              )}
-              Are you sure? You will not be able to undo this action.
-            </AlertDialogBody>
+  test("Edit Meeting: Successful update", async ({ page }) => {
+    // Go to edit page of the first meeting
+    await page.goto("/meetings");
+    await page.getByRole("button", { name: "Edit Meeting" }).first().click();
 
-            <AlertDialogFooter gap={3}>
-              <Button variant="danger" type="submit" isLoading={isSubmitting}>
-                Delete
-              </Button>
-              <Button
-                ref={cancelRef}
-                onClick={onClose}
-                isDisabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
-    </>
-  )
-}
+    // Update meeting details
+    await page.getByPlaceholder("Title").fill(updatedMeetingTitle);
+    await page.getByPlaceholder("Agenda").fill(updatedAgenda);
+    await page.getByRole("button", { name: "Save" }).click();
 
-export default Delete
+    // Verify the updated meeting details
+    const updatedMeeting = await page.getByText(updatedMeetingTitle);
+    expect(updatedMeeting).toBeVisible();
+  });
+
+  test("Delete Meeting: Successful deletion", async ({ page }) => {
+    await page.goto("/meetings");
+    const meetingToDelete = await page.getByText(updatedMeetingTitle);
+
+    // Trigger deletion
+    await page.getByRole("button", { name: "Delete Meeting" }).first().click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    // Verify the meeting no longer exists
+    await expect(meetingToDelete).not.toBeVisible();
+  });
+});
