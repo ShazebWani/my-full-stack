@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.tests.utils.meeting import create_random_meeting
 
 
-# Shazeb's note: Don't need permissions for meetings because we don't check 
+# Shazeb's note: Don't need permissions for meetings because we don't check
 # if the user is super user like we do for items
 
 def test_create_meeting(
